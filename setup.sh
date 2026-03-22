@@ -193,11 +193,11 @@ argocd app create "${APP_NAME}" \
 log "Triggering initial sync..."
 argocd app sync "${APP_NAME}"
 
-log "Waiting for application to be Healthy and Synced..."
+log "Waiting for application to be Healthy and Synced (up to 5 min)..."
 argocd app wait "${APP_NAME}" \
   --health \
   --sync \
-  --timeout 120
+  --timeout 300
 ok "Application '${APP_NAME}' is Healthy and Synced"
 
 # --------------------------------------------------------------------------- #
