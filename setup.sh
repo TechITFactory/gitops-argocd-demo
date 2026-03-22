@@ -155,22 +155,25 @@ if ! git diff --cached --quiet; then
 fi
 
 REPO_URL="https://github.com/${GITHUB_USER}/${REPO_NAME}.git"
+GH_TOKEN="$(gh auth token)"
+
+# Use token-embedded URL so git doesn't need git-remote-https helper
+AUTHED_URL="https://${GH_TOKEN}@github.com/${GITHUB_USER}/${REPO_NAME}.git"
 
 if gh repo view "${GITHUB_USER}/${REPO_NAME}" >/dev/null 2>&1; then
   ok "GitHub repo already exists — pushing latest..."
-  git remote set-url origin "${REPO_URL}" 2>/dev/null || \
-    git remote add origin "${REPO_URL}"
+  git remote set-url origin "${AUTHED_URL}" 2>/dev/null || \
+    git remote add origin "${AUTHED_URL}"
   git push origin main
 else
   log "Creating GitHub repo and pushing..."
-  # Remove any stale remote before gh creates the repo
   git remote remove origin 2>/dev/null || true
-  gh repo create "${GITHUB_USER}/${REPO_NAME}" \
-    --public \
-    --source . \
-    --remote origin \
-    --push
+  gh repo create "${GITHUB_USER}/${REPO_NAME}" --public >/dev/null
+  git remote add origin "${AUTHED_URL}"
+  git push -u origin main
 fi
+# Reset remote to clean URL (no token stored in .git/config)
+git remote set-url origin "${REPO_URL}"
 ok "Manifests pushed to ${REPO_URL}"
 
 # --------------------------------------------------------------------------- #
